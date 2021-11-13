@@ -12,7 +12,7 @@ typedef pair<int, int> pi;
 vector<vector<int>> L, G;
 queue<int> Q;
 
-int numVertices, numThreads;
+int numVertices;
 
 sem_t q, l;
 
@@ -28,8 +28,8 @@ void pruned_dijkstra(int v){
     int numVertices = G.size();
     vector<int> D;
 
-    cout<<endl;
-    cout<<"Vertex "<<v<<endl;
+    // cout<<endl;
+    // cout<<"Vertex "<<v<<endl;
 
     fr(i,0,numVertices) D.push_back(inf);
     D[v] = 0;
@@ -38,7 +38,7 @@ void pruned_dijkstra(int v){
     Q.push(make_pair(0,v));
 
     while(!Q.empty()){
-        cout<<Q.top().first<<" "<<Q.top().second<<endl;
+        // cout<<Q.top().first<<" "<<Q.top().second<<endl;
         int u = Q.top().second;
         Q.pop();
 
@@ -47,18 +47,17 @@ void pruned_dijkstra(int v){
             sem_post(&l);
             continue;
         }
-        L[u][v] = L[v][u] = D[u];
+        L[u][v] = D[u];
         sem_post(&l);
 
         fr(i,0,numVertices){
-            if(G[u][i] != inf && D[i] == inf){
+            if(G[u][i] != inf && D[i]>D[u]+G[u][i]){
                 D[i] = D[u] + G[u][i];
                 Q.push(make_pair(D[i],i));
             }
-        }        
+        }
 
     }
-    cout<<endl;
 }
 
 void getQueueOutDegree(){
@@ -74,12 +73,10 @@ void getQueueOutDegree(){
     for(auto x:ans) Q.push(x.second);
 }
 
-void getGraph(){
+void getGraphAndL(){
     vector<tuple<int, int, int>> edges;
     int ne;
 
-    cout<<"Number of threads: ";
-    cin>>numThreads;
     cout<<"Num of vertices: ";
     cin>>numVertices;
     cout<<"Num of edges: ";
@@ -88,6 +85,7 @@ void getGraph(){
     vector<int> v;
     fr(i,0,numVertices) v.push_back(inf);
     fr(i,0,numVertices) G.push_back(v);
+    fr(i,0,numVertices) L.push_back(v);
 
     fr(i,0,ne){
         int a,b,c;
@@ -97,16 +95,11 @@ void getGraph(){
 }
 
 void initialize(){
-    getGraph();
-    
-    vector<int> v;
-    fr(j,0,numVertices) v.push_back(inf);
-    fr(i,0,numVertices) L.push_back(v);
-
+    getGraphAndL();
     getQueueOutDegree();
 }
 
-void algo2(){
+void algo2(int numThreads){
     double start, end, cpu_time_used;
 
     start = omp_get_wtime();
@@ -132,19 +125,25 @@ void algo2(){
 }
 
 int main(){
+    int numThreads;
+    cout<<"Number of threads: ";
+    cin>>numThreads;
+
     sem_init(&q,0,1);
     sem_init(&l,0,1);
 
     initialize();
 
-    algo2();
+    algo2(numThreads);
 
     cout<<"\nL:\n";
     fr(i,0,L.size()){
         fr(j,0,L[i].size()){
             if(L[i][j] == inf) L[i][j] = L[j][i] = Query(i,j);
-            cout<<"L["<<i<<"]["<<j<<"] = "<<L[i][j]<<endl;
+            // if(L[i][j] != inf) cout<<"L["<<i<<"]["<<j<<"] = "<<L[i][j]<<endl;
+            cout<<L[i][j]<<" ";
         }
+        cout<<endl;
     }
     cout<<endl;
 
