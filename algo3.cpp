@@ -24,34 +24,36 @@ int Query(int s, int t){
     return ans;
 }
 
-void pruned_dijkstra(int v){
-    vector<int> D;
-
-    fr(i,0,numVertices) D.push_back(inf);
-    D[v] = 0;
+void pruned_dijkstra(int v, vector<int> *D){
+    (*D)[v] = 0;
 
     priority_queue<pi,vector<pi>,greater<pi>> Q;
     Q.push(make_pair(0,v));
+
+    vector<int> currVertices;
+    currVertices.push_back(v);
 
     while(!Q.empty()){
         int u = Q.top().second;
         Q.pop();
 
         sem_wait(&l);
-        if(Query(v,u) <= D[u]){
+        if(Query(v,u) <= (*D)[u]){
             sem_post(&l);
             continue;
         }
-        L[u][v] = D[u];
+        L[u][v] = (*D)[u];
         sem_post(&l);
 
         fr(i,0,numVertices){
-            if(G[u][i] != inf && D[i]>D[u]+G[u][i]){
-                D[i] = D[u] + G[u][i];
-                Q.push(make_pair(D[i],i));
+            if(G[u][i] != inf && (*D)[i]>(*D)[u]+G[u][i]){
+                (*D)[i] = (*D)[u] + G[u][i];
+                Q.push(make_pair((*D)[i],i));
+                currVertices.push_back(i);
             }
         }
     }
+    for(auto x:currVertices) (*D)[x] = inf;
 }
 
 void initialize(){
@@ -97,15 +99,20 @@ void initialize(){
 void algo2(int numThreads){
     double start, end, cpu_time_used;
 
-    printf("Starting computation...\n");
+    cout<<"Starting computation...\n";
 
     start = omp_get_wtime();
 
     // for(auto x:Q) cout<<x<<" ";
     // cout<<endl;
+    
+    vector<int> D;
 
-    #pragma omp parallel shared(Q,L,G,l,q,numVertices,i) num_threads(numThreads)
+    #pragma omp parallel shared(Q,L,G,l,q,numVertices,i) private(D) num_threads(numThreads)
     {
+        
+        fr(i,0,numVertices) D.push_back(inf);
+
         #pragma omp while schedule(static)
         while(1){
             sem_wait(&q);
@@ -120,15 +127,15 @@ void algo2(int numThreads){
             // To track progress
             // if(i+1%100 == 0) cout<<size<<" vertices done\n";
             
-            pruned_dijkstra(v);
+            pruned_dijkstra(v,&D);
         }
     }
 
     end = omp_get_wtime();
     cpu_time_used = end - start;
 
-    printf("Finished computation\n");
-    printf("Time Elapsed: %f sec\n", cpu_time_used);
+    cout<<"Finished computation\n";
+    cout<<"Time Elapsed: "<<cpu_time_used<<" sec\n";
 }
 
 int main(){
