@@ -77,10 +77,10 @@ void getGraphAndL(){
     vector<tuple<int, int, int>> edges;
     int ne;
 
-    cout<<"Num of vertices: ";
     cin>>numVertices;
-    cout<<"Num of edges: ";
     cin>>ne;
+    // cout<<"Num of vertices: "<<numVertices<<endl;
+    // cout<<"Num of edges: "<<ne<<endl;
     
     vector<int> v;
     fr(i,0,numVertices) v.push_back(inf);
@@ -89,7 +89,21 @@ void getGraphAndL(){
 
     fr(i,0,ne){
         int a,b,c;
+
+        // General
         cin>>a>>b>>c;
+
+
+        // Wikivote 
+        // cin>>a>>b;
+        // c = 1;
+        // a--;
+        // b--;
+
+        // Gnutella
+        // cin>>a>>b;
+        // c = 1;
+
         G[a][b] = G[b][a] = c;
     }
 }
@@ -113,6 +127,9 @@ void algo2(int numThreads){
             Q.pop();
             sem_post(&q);
 
+            int size = numVertices - Q.size();
+            if(size%100 == 0) cout<<size<<" vertices done\n";
+
             pruned_dijkstra(v);
         }
     }
@@ -126,8 +143,12 @@ void algo2(int numThreads){
 
 int main(){
     int numThreads;
-    cout<<"Number of threads: ";
+    // cout<<"Number of threads: ";
     cin>>numThreads;
+
+    
+    freopen("./Datasets/test-1000-2730.txt", "r", stdin);
+    freopen("output.txt", "w", stdout);
 
     sem_init(&q,0,1);
     sem_init(&l,0,1);
@@ -136,7 +157,7 @@ int main(){
 
     algo2(numThreads);
 
-    cout<<"\nL:\n";
+    // cout<<"\nL:\n";
     fr(i,0,L.size()){
         fr(j,0,L[i].size()){
             if(L[i][j] == inf) L[i][j] = L[j][i] = Query(i,j);
@@ -145,7 +166,6 @@ int main(){
         }
         cout<<endl;
     }
-    cout<<endl;
 
     return 0;
 }
