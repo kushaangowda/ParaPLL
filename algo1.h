@@ -20,6 +20,9 @@ vector<vector<int>> pruned_dijkstra(vector<vector<int>> G, int v, vector<vector<
     int numVertices = G.size();
     vector<int> D;
 
+    cout<<endl;
+    cout<<"Vertex "<<v<<endl;
+
     fr(i,0,numVertices) D.push_back(inf);
     D[v] = 0;
 
@@ -27,18 +30,20 @@ vector<vector<int>> pruned_dijkstra(vector<vector<int>> G, int v, vector<vector<
     Q.push(make_pair(0,v));
 
     while(!Q.empty()){
+        cout<<Q.top().first<<" "<<Q.top().second<<endl;
         int u = Q.top().second;
         Q.pop();
         if(Query(v,u,L) <= D[u]) continue;
         L[u][v] = D[v];
         fr(i,0,numVertices){
-            if(G[u][i] != 0 && D[i] == inf){
+            if(G[u][i] != inf && D[i] == inf){
                 D[i] = D[u] + G[u][i];
                 Q.push(make_pair(D[i],i));
             }
         }        
 
     }
+    cout<<endl;
 
     // fr(i,0,L.size()){
     //     fr(j,0,L[i].size()){
