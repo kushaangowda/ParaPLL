@@ -10,14 +10,17 @@ using namespace std;
 typedef pair<int, int> pi;
 
 vector<vector<int>> L, G;
-queue<int> Q;
+vector<int> Q;
 
 int numVertices;
 
-sem_t q, l;
+sem_t q;
+
+omp_lock_t l;
 
 int Query(int s, int t){
     int ans = inf;
+    if(L[s][t] != inf) return L[s][t];
     fr(i,0,L.size()) {
         if(L[s][i] != inf && L[t][i] != inf) ans = min(ans, L[s][i]+L[t][i]);
     }
@@ -42,13 +45,13 @@ void pruned_dijkstra(int v){
         int u = Q.top().second;
         Q.pop();
 
-        sem_wait(&l);
+        // omp_set_lock(&l);
         if(Query(v,u) <= D[u]){
-            sem_post(&l);
+            // omp_unset_lock(&l);
             continue;
         }
-        L[u][v] = D[u];
-        sem_post(&l);
+        L[u][v] = L[v][u] = D[u];
+        // omp_unset_lock(&l);
 
         fr(i,0,numVertices){
             if(G[u][i] != inf && D[i]>D[u]+G[u][i]){
@@ -70,7 +73,7 @@ void getQueueOutDegree(){
         ans.push_back(make_pair(count,i));
     }
     sort(ans.rbegin(), ans.rend());
-    for(auto x:ans) Q.push(x.second);
+    for(auto x:ans) Q.push_back(x.second);
 }
 
 void getGraphAndL(){
@@ -116,29 +119,30 @@ void initialize(){
 void algo2(int numThreads){
     double start, end, cpu_time_used;
 
+    cout<<"Starting computation\n";
+
+    int i;
+
     start = omp_get_wtime();
 
-    #pragma omp parallel shared(Q,L,G,l,q,numVertices) num_threads(numThreads)
-    {
-        #pragma omp while schedule(static)
-        while(!Q.empty()){
-            sem_wait(&q);
-            int v = Q.front();
-            Q.pop();
-            sem_post(&q);
+    #pragma omp parallel for shared(Q,L,G,l,q,numVertices,i) num_threads(numThreads)
+    for(i=0;i<numVertices;i++){
+        // sem_wait(&q);
+        // cout<<omp_get_thread_num()<<" "<<i<<endl;
+        // sem_post(&q);
+        int v = Q[i];
 
-            int size = numVertices - Q.size();
-            if(size%100 == 0) cout<<size<<" vertices done\n";
+        // int size = numVertices - Q.size();
+        // if(size%100 == 0) cout<<size<<" vertices done\n";
 
-            pruned_dijkstra(v);
-        }
+        pruned_dijkstra(v);
     }
 
     end = omp_get_wtime();
     cpu_time_used = end - start;
 
-    printf("Finished computation\n");
-    printf("Time Elapsed: %f sec\n", cpu_time_used);
+    cout<<"Finished computation\n";
+    cout<<"Time Elapsed: "<<cpu_time_used<<" sec\n";
 }
 
 int main(){
@@ -148,24 +152,25 @@ int main(){
 
     
     freopen("./Datasets/test-1000-2730.txt", "r", stdin);
-    freopen("output.txt", "w", stdout);
+    // freopen("output.txt", "w", stdout);
 
-    sem_init(&q,0,1);
-    sem_init(&l,0,1);
+    // sem_init(&q,0,1);
+    omp_init_lock(&l);
+    // sem_init(&l,0,1);
 
     initialize();
 
     algo2(numThreads);
 
     // cout<<"\nL:\n";
-    fr(i,0,L.size()){
-        fr(j,0,L[i].size()){
-            if(L[i][j] == inf) L[i][j] = L[j][i] = Query(i,j);
-            // if(L[i][j] != inf) cout<<"L["<<i<<"]["<<j<<"] = "<<L[i][j]<<endl;
-            cout<<L[i][j]<<" ";
-        }
-        cout<<endl;
-    }
+    // fr(i,0,L.size()){
+    //     fr(j,0,L[i].size()){
+    //         if(L[i][j] == inf) L[i][j] = L[j][i] = Query(i,j);
+    //         // if(L[i][j] != inf) cout<<"L["<<i<<"]["<<j<<"] = "<<L[i][j]<<endl;
+    //         cout<<L[i][j]<<" ";
+    //     }
+    //     cout<<endl;
+    // }
 
     return 0;
 }

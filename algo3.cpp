@@ -113,15 +113,16 @@ void algo2(int numThreads){
         
         fr(i,0,numVertices) D.push_back(inf);
 
-        #pragma omp while schedule(static)
-        while(1){
+
+        #pragma omp for
+        for(i = 0;i<numVertices;i++){
             sem_wait(&q);
-            if(i >= numVertices){
-                sem_post(&q);
-                break;
-            }
+            // if(i >= numVertices){
+            //     sem_post(&q);
+            //     break;
+            // }
+            // cout<<omp_get_thread_num()<<" "<<i<<" ";
             int v = Q[i];
-            i++;
             sem_post(&q);
 
             // To track progress
@@ -144,8 +145,8 @@ int main(){
     cin>>numThreads;
 
     
-    freopen("./Datasets/test-20-98.txt", "r", stdin);
-    freopen("output.txt", "w", stdout);
+    freopen("./Datasets/test-1500-13440.txt", "r", stdin);
+    // freopen("output.txt", "w", stdout);
 
     sem_init(&q,0,1);
     sem_init(&l,0,1);
@@ -155,14 +156,14 @@ int main(){
     algo2(numThreads);
 
     // cout<<"\nL:\n";
-    fr(i,0,L.size()){
-        fr(j,0,L[i].size()){
-            if(L[i][j] == inf) L[i][j] = L[j][i] = Query(i,j);
-            // if(L[i][j] != inf) cout<<"L["<<i<<"]["<<j<<"] = "<<L[i][j]<<endl;
-            cout<<L[i][j]<<" ";
-        }
-        cout<<endl;
-    }
+    // fr(i,0,L.size()){
+    //     fr(j,0,L[i].size()){
+    //         if(L[i][j] == inf) L[i][j] = L[j][i] = Query(i,j);
+    //         // if(L[i][j] != inf) cout<<"L["<<i<<"]["<<j<<"] = "<<L[i][j]<<endl;
+    //         cout<<L[i][j]<<" ";
+    //     }
+    //     cout<<endl;
+    // }
 
     return 0;
 }
