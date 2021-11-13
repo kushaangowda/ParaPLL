@@ -1,4 +1,5 @@
 #include <bits/stdc++.h>
+#include <semaphore.h>
 
 #define inf INT_MAX
 #define fr(i,a,b) for(int i=a;i<b;i++)
@@ -10,18 +11,20 @@ typedef pair<int, int> pi;
 int Query(int s, int t, vector<vector<int>> L){
     int ans = inf;
     fr(i,0,L.size()) {
-        if(L[s][i] == inf || L[t][i] == inf) continue;
-        ans = min(ans, L[s][i]+L[t][i]);
+        if(L[s][i] != inf && L[t][i] != inf) ans = min(ans, L[s][i]+L[t][i]);
     }
     return ans;
 }
 
-vector<vector<int>> pruned_dijkstra(vector<vector<int>> G, int v, vector<vector<int>> L){
+vector<vector<int>> pruned_dijkstra(vector<vector<int>> G, int v, vector<vector<int>> L, sem_t l){
     int numVertices = G.size();
     vector<int> D;
 
     cout<<endl;
     cout<<"Vertex "<<v<<endl;
+
+    vector<vector<int>> Lk;
+    fr(i,0,L.size()) Lk.push_back(L[i]);
 
     fr(i,0,numVertices) D.push_back(inf);
     D[v] = 0;
@@ -33,8 +36,8 @@ vector<vector<int>> pruned_dijkstra(vector<vector<int>> G, int v, vector<vector<
         cout<<Q.top().first<<" "<<Q.top().second<<endl;
         int u = Q.top().second;
         Q.pop();
-        if(Query(v,u,L) <= D[u]) continue;
-        L[u][v] = D[v];
+        if(Query(v,u,Lk) <= D[u]) continue;
+        Lk[u][v] = Lk[v][u] = D[u];
         fr(i,0,numVertices){
             if(G[u][i] != inf && D[i] == inf){
                 D[i] = D[u] + G[u][i];
@@ -44,13 +47,6 @@ vector<vector<int>> pruned_dijkstra(vector<vector<int>> G, int v, vector<vector<
 
     }
     cout<<endl;
-
-    // fr(i,0,L.size()){
-    //     fr(j,0,L[i].size()){
-    //         cout<<L[i][j]<<" ";
-    //     }
-    //     cout<<"\n";
-    // }
     
-    return L;
+    return Lk;
 }

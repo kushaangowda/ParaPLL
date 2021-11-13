@@ -1,23 +1,66 @@
 #include <bits/stdc++.h>
 #include <semaphore.h>
-#include "algo1.h"
 
 #define inf INT_MAX
 #define fr(i,a,b) for(int i=a;i<b;i++)
 
 using namespace std;
 
-typedef pair<int,int> pi;
-
+typedef pair<int, int> pi;
 
 vector<vector<int>> L, G;
 queue<int> Q;
 
 int numVertices;
 
-sem_t q;
+sem_t q, l;
 
-vector<pi> getOutDegree(vector<vector<int>> G){
+int Query(int s, int t, vector<vector<int>> L){
+    int ans = inf;
+    fr(i,0,L.size()) {
+        if(L[s][i] != inf && L[t][i] != inf) ans = min(ans, L[s][i]+L[t][i]);
+    }
+    return ans;
+}
+
+void pruned_dijkstra(int v){
+    int numVertices = G.size();
+    vector<int> D;
+
+    cout<<endl;
+    cout<<"Vertex "<<v<<endl;
+
+    fr(i,0,numVertices) D.push_back(inf);
+    D[v] = 0;
+
+    priority_queue<pi,vector<pi>,greater<pi>> Q;
+    Q.push(make_pair(0,v));
+
+    while(!Q.empty()){
+        cout<<Q.top().first<<" "<<Q.top().second<<endl;
+        int u = Q.top().second;
+        Q.pop();
+        
+        sem_wait(&l);
+        if(Query(v,u,L) <= D[u]){
+            sem_post(&l);
+            continue;
+        }
+        L[u][v] = L[v][u] = D[u];
+        sem_post(&l);
+
+        fr(i,0,numVertices){
+            if(G[u][i] != inf && D[i] == inf){
+                D[i] = D[u] + G[u][i];
+                Q.push(make_pair(D[i],i));
+            }
+        }        
+
+    }
+    cout<<endl;
+}
+
+vector<pi> getOutDegree(){
     vector<pi> ans;
     fr(i,0,numVertices){
         int count = 0;
@@ -56,12 +99,12 @@ vector<vector<int>> getGraph(){
 void initialize(){
     G = getGraph();
     numVertices = G.size();
-    fr(i,0,numVertices){
-        vector<int> v;
-        fr(j,0,numVertices) v.push_back(inf);
-        L.push_back(v);
-    }
-    vector<pi> outDegreee = getOutDegree(G);
+    
+    vector<int> v;
+    fr(j,0,numVertices) v.push_back(inf);
+    fr(i,0,numVertices) L.push_back(v);
+
+    vector<pi> outDegreee = getOutDegree();
     sort(outDegreee.rbegin(), outDegreee.rend());
 
     for(auto x:outDegreee) Q.push(x.second);
@@ -74,12 +117,14 @@ void algo2(){
         Q.pop();
         sem_post(&q);
 
-        L = pruned_dijkstra(G,v,L);
+        pruned_dijkstra(v);
     }
 }
 
 int main(){
     sem_init(&q,0,1);
+    sem_init(&l,0,1);
+
     initialize();
 
     algo2();
@@ -92,6 +137,8 @@ int main(){
             }
         }
     }
+
+    cout<<Query(0,3,L)<<endl;
 
     return 0;
 }
