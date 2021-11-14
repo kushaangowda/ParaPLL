@@ -1,3 +1,12 @@
+// Our implementation of ParaPLL paper
+// https://dl.acm.org/doi/10.1145/3225058.3225061
+
+// Team Members:
+// Abhinav Reddy (190001007)
+// Kola Sai Ram (190001026)
+// Kushaan Gowda (190001031)
+// Mayank Raj (190001035)
+
 #include <bits/stdc++.h>
 #include <omp.h>
 
@@ -15,6 +24,7 @@ int numVertices;
 
 omp_lock_t l;
 
+// function to answer shortest path queries
 int Query(int s, int t){
     int ans = inf;
     if(L[s][t] != inf) return L[s][t];
@@ -24,6 +34,7 @@ int Query(int s, int t){
     return ans;
 }
 
+// pruned dijkstra's algorithm
 void pruned_dijkstra(int v){
     int numVertices = G.size();
     vector<int> D;
@@ -56,6 +67,7 @@ void pruned_dijkstra(int v){
     }
 }
 
+// function to sort vertices according to their outdegree in decreasing order
 void getQueueOutDegree(){
     vector<pi> ans;
     fr(i,0,numVertices){
@@ -69,8 +81,8 @@ void getQueueOutDegree(){
     for(auto x:ans) Q.push_back(x.second);
 }
 
-void getGraphAndL(){
-    vector<tuple<int, int, int>> edges;
+// function to create adjacency matrix and initialize Labels
+void initializeGraphAndLabels(){
     int ne;
 
     cin>>numVertices;
@@ -104,11 +116,13 @@ void getGraphAndL(){
     }
 }
 
+// function to initialize variables
 void initialize(){
-    getGraphAndL();
+    initializeGraphAndLabels();
     getQueueOutDegree();
 }
 
+// ParaPLL algorithm
 void algo2(int numThreads){
     double start, end, cpu_time_used;
 
@@ -136,14 +150,19 @@ int main(){
     cout<<"Number of threads: ";
     cin>>numThreads;
 
-    
+    // Dataset Input
     freopen("./Datasets/test-20-98.txt", "r", stdin);
+
+    // Move output to output.txt
     freopen("output.txt", "w", stdout);
 
+    // initialize lock to access labels without facing race conditions
     omp_init_lock(&l);
 
+    // function to initialize graph and labels
     initialize();
 
+    // ParaPLL algorithm
     algo2(numThreads);
 
     /*
