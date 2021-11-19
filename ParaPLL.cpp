@@ -165,8 +165,7 @@ int main(){
     // ParaPLL algorithm
     algo2(numThreads);
 
-    /*
-
+   
     // print output
     cout<<"\nL:\n";
     fr(i,0,L.size()){
@@ -177,8 +176,6 @@ int main(){
         }
         cout<<endl;
     }
-
-    */
 
     return 0;
 }
